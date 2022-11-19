@@ -12,10 +12,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
+door_opened_at=datetime.now()
 
 
-door_opened_at=None
 def Door():
+    global door_opened_at
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
