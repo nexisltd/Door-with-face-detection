@@ -1,0 +1,68 @@
+name: Docker CI
+on:
+  push:
+    branches: [main]
+jobs:
+  Door-Opener:
+    runs-on: ubuntu-latest
+    steps:
+        -
+          name: checkout
+          uses: actions/checkout@v3
+        -
+          name: Set up QEMU
+          uses: docker/setup-qemu-action@v2
+        -
+          name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v2
+        -
+          name: Docker Login
+          uses: docker/login-action@v2
+          with:
+              username: ${{ secrets.DOCKER_USER_NAME }}
+              password: ${{secrets.DOCKER_HUB_PASSWORD}}
+        -
+          name: Docker meta
+          id: meta
+          uses: docker/metadata-action@v4
+          with:
+            images: |
+              nexisltd/Door-with-face-detection
+            labels: |
+              maintainer=Team Nexis
+              org.opencontainers.image.title=Door opener with Zkteco & RTSP camera with face detection
+              org.opencontainers.image.description=Just door opening & Realtime web camera
+              org.opencontainers.image.vendor=Nexis Limited
+            flavor: |
+              latest=auto
+              prefix=
+              suffix=
+            tags: |
+              type=raw,value=latest,enable={{is_default_branch}}
+              type=ref, event=tag
+              type=semver,pattern={{major}}.{{minor}}.{{patch}}
+              type=sha
+        -
+          name: Cache Docker layers
+          uses: actions/cache@v2
+          with:
+            path: /tmp/.buildx-cache
+            key: ${{ runner.os }}-buildx-${{ github.sha }}
+            restore-keys: |
+              ${{ runner.os }}-buildx-
+        -
+          name: Build and Push
+          uses: docker/build-push-action@v3
+          with:
+              context: .
+              file: Dockerfile
+              platforms: linux/amd64
+              push: true
+              tags: ${{ steps.meta.outputs.tags }}
+              labels: ${{ steps.meta.outputs.labels }}
+              build-args: |
+                  BUILDTIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+                  VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+                  REVISION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
+              cache-from: type=local,src=/tmp/.buildx-cache
+              cache-to: type=local,dest=/tmp/.buildx-cache
