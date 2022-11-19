@@ -14,25 +14,25 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 
-door_opened_at=datetime.now()
+door_opened_at=None
 def Door():
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
-    try:
-        if (door_opened_at-datetime.now())==10:
+    if (datetime.now()-door_opened_at).seconds>10:
+        try:
             conn = zk.connect()
             conn.disable_device()
             conn.test_voice()
             conn.unlock(time=1)
             print(f"The door has been opened at {datetime.now().replace(microsecond=0)}")
             conn.enable_device()
-    except Exception as e:
-        print(e)
-    finally:
-        if conn:
-            conn.disconnect()
-            door_opened_at=datetime.now()
+        except Exception as e:
+            print(e)
+        finally:
+            if conn:
+                conn.disconnect()
+                door_opened_at=datetime.now()
 
 video_capture = cv2.VideoCapture(os.getenv("ML_CAM_IP"))
 print(f'Using Camera: {os.getenv("ML_CAM_IP")}')
