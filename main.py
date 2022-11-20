@@ -51,7 +51,7 @@ def Door():
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
-    if (datetime.now()-Global.door_opened_at).seconds>10:
+    if ((datetime.now()-Global.door_opened_at).microseconds)/1000>10000:
         try:
             conn = zk.connect()
             conn.disable_device()
