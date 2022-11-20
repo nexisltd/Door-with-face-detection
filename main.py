@@ -31,20 +31,19 @@ def prev_id(current_id, worker_num):
 def capture(read_frame_list, Global, worker_num):
 
     video_capture = cv2.VideoCapture(os.getenv("ML_CAM_IP"))
-    haar_cascade = cv2.CascadeClassifier('Haarcascade_frontalface_default.xml')
-   
+    haar_cascade = cv2.CascadeClassifier("Haarcascade_frontalface_default.xml")
 
     while not Global.is_exit:
         # If it's time to read a frame
         if Global.buff_num != next_id(Global.read_num, worker_num):
             # Grab a single frame of video
             ret, frame = video_capture.read()
-                # Converting image to grayscale, detection model sees it as grayscale
+            # Converting image to grayscale, detection model sees it as grayscale
             gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            
+
             # Applying the face detection method on the grayscale image
             faces_rect = haar_cascade.detectMultiScale(gray_img, 1.1, 9)
-            
+
             # Iterating through rectangles of detected faces, displaying the rectangle
             if numpy.asarray(faces_rect).any():
                 read_frame_list[Global.buff_num] = frame
@@ -55,13 +54,20 @@ def capture(read_frame_list, Global, worker_num):
     # Release webcam
     video_capture.release()
 
+
 def Door():
-    time.sleep(random.uniform(1,1.5))
+    time.sleep(random.uniform(0.1, 0.5))
     conn = None
-    zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
-            ommit_ping=False)
-    if (datetime.now()-Global.door_opened_at).seconds*1000>11000:
-        Global.door_opened_at=datetime.now()
+    zk = ZK(
+        f'{os.getenv("ZK_IP")}',
+        port=4370,
+        timeout=5,
+        password=f'{os.getenv("ZK_PASSWORD")}',
+        force_udp=False,
+        ommit_ping=False,
+    )
+    if (datetime.now() - Global.door_opened_at).seconds > 11:
+        Global.door_opened_at = datetime.now()
         try:
             conn = zk.connect()
             conn.disable_device()
@@ -82,11 +88,11 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
     while not Global.is_exit:
 
         # Wait to read
-        while (Global.read_num != worker_id or Global.read_num != prev_id(Global.buff_num, worker_num)) and not Global.is_exit:
+        while (
+            Global.read_num != worker_id
+            or Global.read_num != prev_id(Global.buff_num, worker_num)
+        ) and not Global.is_exit:
             time.sleep(0.01)
-
-        # Delay to make the video look smoother
-        time.sleep(Global.frame_delay)
 
         # Read a single frame from frame list
         frame_process = read_frame_list[worker_id]
@@ -100,11 +106,13 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
         # Find all the faces and face encodings in the frame of video, cost most time
         face_locations = face_recognition.face_locations(rgb_frame)
         face_encodings = face_recognition.face_encodings(rgb_frame, face_locations)
-        each_frame = zip(face_locations,face_encodings)
+        each_frame = zip(face_locations, face_encodings)
 
         # Loop through each face in this frame of video
         for (top, right, bottom, left), face_encoding in each_frame:
-            if matches := face_recognition.compare_faces(known_face_encodings, face_encoding):
+            if matches := face_recognition.compare_faces(
+                known_face_encodings, face_encoding
+            ):
                 Door()
                 break
         # Wait to write
@@ -116,12 +124,12 @@ def process(worker_id, read_frame_list, write_frame_list, Global, worker_num):
 
         # Expect next worker to write frame
         Global.write_num = next_id(Global.write_num, worker_num)
-        
-if __name__ == '__main__':
 
 
-    if platform.system() == 'Darwin':
-        set_start_method('forkserver')
+if __name__ == "__main__":
+
+    if platform.system() == "Darwin":
+        set_start_method("forkserver")
 
     # Global variables
     Global = Manager().Namespace()
@@ -132,31 +140,48 @@ if __name__ == '__main__':
     Global.is_exit = False
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
-    Global.door_opened_at=datetime.now()
+    Global.door_opened_at = datetime.now()
 
-    # Number of workers (subprocess use to process frames)
     worker_num = cpu_count() - 1 if cpu_count() > 2 else 2
-    # Subprocess list
     print(f'Using Camera: {os.getenv("ML_CAM_IP")}')
-    p = [threading.Thread(target=capture, args=(read_frame_list, Global, worker_num,))]
-    print('Starting Video Capture!')
+    p = [
+        threading.Thread(
+            target=capture,
+            args=(
+                read_frame_list,
+                Global,
+                worker_num,
+            ),
+        )
+    ]
+    print("Starting Video Capture!")
     p[0].start()
 
     our_face_encodings = []
     img = os.listdir(BASE_DIR.joinpath("images"))
-    print(f'Total image loaded: {len(img)}')
+    print(f"Total image loaded: {len(img)}")
 
     for i in img:
         image = face_recognition.load_image_file(f'{BASE_DIR.joinpath("images")}/{i}')
         face_encoding = face_recognition.face_encodings(image)[0]
         our_face_encodings.append(face_encoding)
 
-    Global.known_face_encodings=our_face_encodings.copy()
-
+    Global.known_face_encodings = our_face_encodings.copy()
 
     # Create workers
     for worker_id in range(1, worker_num + 1):
-        p.append(Process(target=process, args=(worker_id, read_frame_list, write_frame_list, Global, worker_num,)))
+        p.append(
+            Process(
+                target=process,
+                args=(
+                    worker_id,
+                    read_frame_list,
+                    write_frame_list,
+                    Global,
+                    worker_num,
+                ),
+            )
+        )
         p[worker_id].start()
 
     # Start to show video
@@ -166,19 +191,3 @@ if __name__ == '__main__':
     while not Global.is_exit:
         while Global.write_num != last_num:
             last_num = Global.write_num
-
-            # Calculate fps
-            delay = time.time() - tmp_time
-            tmp_time = time.time()
-            fps_list.append(delay)
-            if len(fps_list) > 5 * worker_num:
-                fps_list.pop(0)
-            fps = len(fps_list) / numpy.sum(fps_list)
-            if fps < 6:
-                Global.frame_delay = (1 / fps) * 0.75
-            elif fps < 20:
-                Global.frame_delay = (1 / fps) * 0.5
-            elif fps < 30:
-                Global.frame_delay = (1 / fps) * 0.25
-            else:
-                Global.frame_delay = 0
