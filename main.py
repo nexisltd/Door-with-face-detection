@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent
-door_opened_at=datetime.now()
+
 
 # Get next worker's id
 def next_id(current_id, worker_num):
@@ -46,7 +46,7 @@ def capture(read_frame_list, Global, worker_num):
     video_capture.release()
 
 def Door():
-    global door_opened_at
+    door_opened_at=Global.door_opened_at
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
@@ -123,6 +123,7 @@ if __name__ == '__main__':
     Global.is_exit = False
     read_frame_list = Manager().dict()
     write_frame_list = Manager().dict()
+    Global.door_opened_at=datetime.now()
 
     # Number of workers (subprocess use to process frames)
     worker_num = cpu_count() - 1 if cpu_count() > 2 else 2
@@ -140,7 +141,7 @@ if __name__ == '__main__':
         image = face_recognition.load_image_file(f'{BASE_DIR.joinpath("images")}/{i}')
         face_encoding = face_recognition.face_encodings(image)[0]
         our_face_encodings.append(face_encoding)
-        
+
     Global.known_face_encodings=our_face_encodings.copy()
 
 
@@ -164,8 +165,6 @@ if __name__ == '__main__':
             if len(fps_list) > 5 * worker_num:
                 fps_list.pop(0)
             fps = len(fps_list) / numpy.sum(fps_list)
-            print("fps: %.2f" % fps)
-
             if fps < 6:
                 Global.frame_delay = (1 / fps) * 0.75
             elif fps < 20:
