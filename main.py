@@ -40,7 +40,7 @@ def capture(read_frame_list, Global, worker_num):
             # Grab a single frame of video
             ret, frame = video_capture.read()
                 # Converting image to grayscale, detection model sees it as grayscale
-            gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            gray_img = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             
             # Applying the face detection method on the grayscale image
             faces_rect = haar_cascade.detectMultiScale(gray_img, 1.1, 9)
