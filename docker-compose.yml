@@ -1,9 +1,8 @@
 version: '3'
 services:
-  face:
-    build:
-      context: .
-      dockerfile: Dockerfile
+ face_detection:
+    image: ghcr.io/nexisltd/door-with-face-detection:latest
+    restart: unless-stopped
     volumes:
       - ./images:/app/images
     env_file:

@@ -28,7 +28,7 @@ jobs:
           uses: docker/metadata-action@v4
           with:
             images: |
-              ghcr.io/nexisltd/Door-with-face-detection
+              ghcr.io/nexisltd/door-with-face-detection
             labels: |
               maintainer=Team Nexis
               org.opencontainers.image.title=Door opener with Zkteco & RTSP camera with face detection
