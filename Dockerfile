@@ -41,6 +41,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 WORKDIR /app
-COPY main.py .
 RUN mkdir images
+COPY Haarcascade_frontalface_default.xml .
+COPY main.py .
 ENTRYPOINT [ "python3", "main.py" ]

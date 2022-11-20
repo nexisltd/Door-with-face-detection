@@ -31,6 +31,7 @@ def prev_id(current_id, worker_num):
 def capture(read_frame_list, Global, worker_num):
 
     video_capture = cv2.VideoCapture(os.getenv("ML_CAM_IP"))
+    haar_cascade = cv2.CascadeClassifier('Haarcascade_frontalface_default.xml')
    
 
     while not Global.is_exit:
@@ -38,8 +39,16 @@ def capture(read_frame_list, Global, worker_num):
         if Global.buff_num != next_id(Global.read_num, worker_num):
             # Grab a single frame of video
             ret, frame = video_capture.read()
-            read_frame_list[Global.buff_num] = frame
-            Global.buff_num = next_id(Global.buff_num, worker_num)
+                # Converting image to grayscale, detection model sees it as grayscale
+            gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            
+            # Applying the face detection method on the grayscale image
+            faces_rect = haar_cascade.detectMultiScale(gray_img, 1.1, 9)
+            
+            # Iterating through rectangles of detected faces, displaying the rectangle
+            if numpy.asarray(faces_rect).any():
+                read_frame_list[Global.buff_num] = frame
+                Global.buff_num = next_id(Global.buff_num, worker_num)
         else:
             time.sleep(0.01)
 
