@@ -9,6 +9,7 @@ import threading
 import platform
 import time
 import numpy
+import random
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -46,6 +47,8 @@ def capture(read_frame_list, Global, worker_num):
     video_capture.release()
 
 def Door():
+    sleep_time=random.uniform(0.1,0.5)
+    time.sleep(sleep_time)
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
