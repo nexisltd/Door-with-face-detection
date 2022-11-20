@@ -132,14 +132,16 @@ if __name__ == '__main__':
     print('Starting Video Capture!')
     p[0].start()
 
-    known_face_encodings = []
+    our_face_encodings = []
     img = os.listdir(BASE_DIR.joinpath("images"))
     print(f'Total image loaded: {len(img)}')
 
     for i in img:
         image = face_recognition.load_image_file(f'{BASE_DIR.joinpath("images")}/{i}')
         face_encoding = face_recognition.face_encodings(image)[0]
-        Global.known_face_encodings.append(face_encoding)
+        our_face_encodings.append(face_encoding)
+        
+    Global.known_face_encodings=our_face_encodings.copy()
 
 
     # Create workers
