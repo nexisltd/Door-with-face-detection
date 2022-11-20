@@ -1,16 +1,17 @@
-from datetime import datetime
 import os
+import platform
+import random
+import threading
+import time
+from datetime import datetime
+from multiprocessing import Manager, Process, cpu_count, set_start_method
+from pathlib import Path
+
 import cv2
 import face_recognition
-from zk import ZK
-from pathlib import Path
-from multiprocessing import Process, Manager, cpu_count, set_start_method
-import threading
-import platform
-import time
 import numpy
-import random
 from dotenv import load_dotenv
+from zk import ZK
 
 load_dotenv()
 
