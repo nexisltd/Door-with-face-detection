@@ -57,7 +57,7 @@ def Door():
             conn.disable_device()
             conn.test_voice()
             conn.unlock(time=1)
-            print(f"The door has been opened at {datetime.now().replace(microsecond=0)}")
+            print(f"The door has been opened at {datetime.now()}")
             conn.enable_device()
         except Exception as e:
             print(e)
