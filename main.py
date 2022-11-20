@@ -46,11 +46,10 @@ def capture(read_frame_list, Global, worker_num):
     video_capture.release()
 
 def Door():
-    door_opened_at=Global.door_opened_at
     conn = None
     zk = ZK(f'{os.getenv("ZK_IP")}', port=4370, timeout=5, password=f'{os.getenv("ZK_PASSWORD")}', force_udp=False,
             ommit_ping=False)
-    if (datetime.now()-door_opened_at).seconds>10:
+    if (datetime.now()-Global.door_opened_at).seconds>10:
         try:
             conn = zk.connect()
             conn.disable_device()
@@ -63,7 +62,7 @@ def Door():
         finally:
             if conn:
                 conn.disconnect()
-                door_opened_at=datetime.now()
+                Global.door_opened_at=datetime.now()
 
 
 
