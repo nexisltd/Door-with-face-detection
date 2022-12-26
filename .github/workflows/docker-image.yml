@@ -22,7 +22,7 @@ jobs:
           with:
               registry: ghcr.io
               username: ${{ secrets.DOCKER_USER_NAME }}
-              password: ${{secrets.DOCKER_PASSWORD}}
+              password: ${{ secrets.DOCKER_HUB_PASSWORD }}
         -
           name: Docker meta
           id: meta
